@@ -1,0 +1,6 @@
+s3:
+  bucket: painting-images
+  region: ru-central1
+  host: https://storage.yandexcloud.net
+  access: S3_ACCESS
+  secret: S3_SECRET
