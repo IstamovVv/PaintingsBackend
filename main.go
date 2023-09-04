@@ -5,14 +5,20 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/valyala/fasthttp"
 	"os"
 	"os/signal"
+	"paint-backend/internal/endpoint"
 	"paint-backend/internal/logger"
 	"paint-backend/internal/repo"
+	"paint-backend/internal/s3storage"
 )
 
 var (
-	dbConn        *pgx.Conn
+	dbConn      *pgx.Conn
+	httpHandler *endpoint.HttpHandler
+
+	storage       *s3storage.Storage
 	productsTable *repo.ProductsTable
 )
 
@@ -21,6 +27,16 @@ func main() {
 	setupConfiguration()
 	setupDatabase()
 	setupTables()
+	setupStorage()
+
+	httpHandler = endpoint.NewHttpHandler(storage, productsTable)
+	go func() {
+		logrus.Info("Server was started")
+		err := fasthttp.ListenAndServe("0.0.0.0:8000", httpHandler.Handle)
+		if err != nil {
+			logrus.Warn(err.Error())
+		}
+	}()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
@@ -60,4 +76,8 @@ func setupTables() {
 	if err != nil {
 		logrus.Fatal("Failed to init products table: ", err.Error())
 	}
+}
+
+func setupStorage() {
+	storage = s3storage.NewStorage()
 }

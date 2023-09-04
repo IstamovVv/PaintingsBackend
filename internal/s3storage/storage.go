@@ -29,3 +29,7 @@ func (s *Storage) GetAllImages() ([]string, error) {
 func (s *Storage) InsertImage(name string, image []byte) error {
 	return s.fs.PutFile(name, image)
 }
+
+func (s *Storage) DeleteImage(name string) error {
+	return s.fs.RemoveFile(name)
+}

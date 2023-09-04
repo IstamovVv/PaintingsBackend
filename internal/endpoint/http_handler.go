@@ -3,6 +3,7 @@ package endpoint
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
 	"paint-backend/internal/repo"
 	"paint-backend/internal/s3storage"
@@ -50,11 +51,53 @@ var routingMap = map[string]route{
 			}
 		},
 	},
+
+	"/api/v1/images": {
+		handler: func(ctx *fasthttp.RequestCtx, h *HttpHandler) {
+			switch cast.ByteArrayToString(ctx.Method()) {
+			case fasthttp.MethodPost:
+				{
+					h.insertImage(ctx)
+				}
+			case fasthttp.MethodDelete:
+				{
+					h.deleteImage(ctx)
+				}
+			default:
+				{
+					ctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)
+				}
+			}
+		},
+	},
 }
 
 type HttpHandler struct {
-	storage       s3storage.Storage
+	storage       *s3storage.Storage
 	productsTable *repo.ProductsTable
+}
+
+func NewHttpHandler(storage *s3storage.Storage, table *repo.ProductsTable) *HttpHandler {
+	return &HttpHandler{
+		storage:       storage,
+		productsTable: table,
+	}
+}
+
+func (h *HttpHandler) Handle(ctx *fasthttp.RequestCtx) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			logrus.Error(err)
+			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+		}
+	}()
+
+	if r, ok := routingMap[cast.ByteArrayToString(ctx.Path())]; ok {
+		r.handler(ctx, h)
+	} else {
+		ctx.SetStatusCode(fasthttp.StatusNotFound)
+	}
 }
 
 func (h *HttpHandler) getAllProducts(ctx *fasthttp.RequestCtx) {
@@ -145,6 +188,24 @@ func (h *HttpHandler) insertImage(ctx *fasthttp.RequestCtx) {
 	}
 
 	err = h.storage.InsertImage(name, decodedImage)
+	if err != nil {
+		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
+}
+
+func (h *HttpHandler) deleteImage(ctx *fasthttp.RequestCtx) {
+	nameBytes := ctx.QueryArgs().Peek("name")
+	if len(nameBytes) == 0 {
+		writeError(ctx, "empty name", fasthttp.StatusBadRequest)
+		return
+	}
+
+	name := cast.ByteArrayToString(nameBytes)
+
+	err := h.storage.DeleteImage(name)
 	if err != nil {
 		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
 		return
