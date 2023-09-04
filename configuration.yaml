@@ -4,3 +4,6 @@ s3:
   host: https://storage.yandexcloud.net
   access: S3_ACCESS
   secret: S3_SECRET
+
+sql:
+  url: postgres://postgres:12956@localhost:5432/boom
