@@ -21,3 +21,11 @@ func NewStorage() *Storage {
 		})),
 	}
 }
+
+func (s *Storage) GetAllImages() ([]string, error) {
+	return s.fs.GetFilesList()
+}
+
+func (s *Storage) InsertImage(name string, image []byte) error {
+	return s.fs.PutFile(name, image)
+}

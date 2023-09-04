@@ -15,13 +15,13 @@ const (
 )
 
 type Product struct {
-	id              uint
-	name            string
-	images          []string
-	stock           StockType
-	discount        uint8
-	description     string
-	characteristics [][2]string
+	Id              uint
+	Name            string
+	Images          []string
+	Stock           StockType
+	Discount        uint8
+	Description     string
+	Characteristics [][2]string
 }
 
 type ProductsTable struct {
@@ -80,7 +80,7 @@ func (t *ProductsTable) GetAllProducts(offset int, limit int) ([]Product, error)
 			p Product
 		)
 
-		err = rows.Scan(&p.id, &p.name, &p.images, &p.stock, &p.discount, &p.description, &p.characteristics)
+		err = rows.Scan(&p.Id, &p.Name, &p.Images, &p.Stock, &p.Discount, &p.Description, &p.Characteristics)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +93,7 @@ func (t *ProductsTable) GetAllProducts(offset int, limit int) ([]Product, error)
 }
 
 func (t *ProductsTable) Insert(p Product) error {
-	_, err := t.db.Exec(context.Background(), t.insertStmt.Name, p.name, p.images, p.stock, p.discount, p.description, p.characteristics)
+	_, err := t.db.Exec(context.Background(), t.insertStmt.Name, p.Name, p.Images, p.Stock, p.Discount, p.Description, p.Characteristics)
 	return err
 }
 
