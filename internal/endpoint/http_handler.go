@@ -23,19 +23,13 @@ type route struct {
 }
 
 var routingMap = map[string]route{
-	"/api/v1/products/all": {
-		handler: func(ctx *fasthttp.RequestCtx, h *HttpHandler) {
-			if cast.ByteArrayToString(ctx.Method()) == fasthttp.MethodGet {
-				h.getAllProducts(ctx)
-			} else {
-				ctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)
-			}
-		},
-	},
-
 	"/api/v1/products": {
 		handler: func(ctx *fasthttp.RequestCtx, h *HttpHandler) {
 			switch cast.ByteArrayToString(ctx.Method()) {
+			case fasthttp.MethodGet:
+				{
+					h.getAllProducts(ctx)
+				}
 			case fasthttp.MethodPost:
 				{
 					h.insertProduct(ctx)
@@ -55,6 +49,10 @@ var routingMap = map[string]route{
 	"/api/v1/images": {
 		handler: func(ctx *fasthttp.RequestCtx, h *HttpHandler) {
 			switch cast.ByteArrayToString(ctx.Method()) {
+			case fasthttp.MethodGet:
+				{
+					h.getAllImages(ctx)
+				}
 			case fasthttp.MethodPost:
 				{
 					h.insertImage(ctx)
