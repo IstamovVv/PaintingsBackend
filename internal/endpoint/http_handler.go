@@ -1,12 +1,16 @@
 package endpoint
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/sirupsen/logrus"
+	"github.com/sunshineplan/imgconv"
 	"github.com/valyala/fasthttp"
+	"net/http"
 	"paint-backend/internal/repo"
 	"paint-backend/internal/s3"
 	"paint-backend/internal/util/cast"
+	"strings"
 )
 
 func init() {
@@ -167,7 +171,6 @@ func (h *HttpHandler) getAllImages(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *HttpHandler) insertImage(ctx *fasthttp.RequestCtx) {
-	// TODO: Компрессия изображений
 	nameBytes := ctx.QueryArgs().Peek("name")
 	if len(nameBytes) == 0 {
 		writeError(ctx, "empty name", fasthttp.StatusBadRequest)
@@ -176,14 +179,30 @@ func (h *HttpHandler) insertImage(ctx *fasthttp.RequestCtx) {
 
 	name := cast.ByteArrayToString(nameBytes)
 	body := ctx.PostBody()
-	err := h.storage.InsertImage(name, body)
 
+	img, err := imgconv.Decode(bytes.NewReader(body))
+	img = imgconv.Resize(img, &imgconv.ResizeOption{Height: 300, Width: 300})
+
+	var buf bytes.Buffer
+	err = imgconv.Write(&buf, img, &imgconv.FormatOption{Format: imgconv.JPEG})
 	if err != nil {
 		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
 		return
 	}
 
-	ctx.SetStatusCode(fasthttp.StatusOK)
+	out := buf.Bytes()
+	nameSplit := strings.Split(name, ".")
+
+	newFileName := nameSplit[0] + ".jpg"
+	mimeType := http.DetectContentType(out)
+
+	link, err := h.storage.InsertImage(newFileName, mimeType, out)
+	if err != nil {
+		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	writeObject(ctx, link, fasthttp.StatusOK)
 }
 
 func (h *HttpHandler) deleteImage(ctx *fasthttp.RequestCtx) {

@@ -22,6 +22,15 @@ func (fs *CommonFileServer) PutFile(file string, data []byte) error {
 	return nil
 }
 
+func (fs *CommonFileServer) PutImage(fileName string, fileType string, data []byte) error {
+	_, err := fs.s3.UploadImage(fileName, fileType, data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (fs *CommonFileServer) GetFile(file string) ([]byte, error) {
 	response, err := fs.s3.GetObject(file)
 	if err != nil {

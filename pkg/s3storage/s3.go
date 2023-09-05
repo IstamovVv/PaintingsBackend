@@ -14,6 +14,7 @@ import (
 type S3Storage interface {
 	GetListObjects(nextToken *string) (*s3.ListObjectsV2Output, error)
 	UploadObject(string, []byte) (*s3.PutObjectOutput, error)
+	UploadImage(string, string, []byte) (*s3.PutObjectOutput, error)
 	GetObject(string) (*s3.GetObjectOutput, error)
 	DeleteObject(string) (*s3.DeleteObjectOutput, error)
 }
@@ -79,6 +80,17 @@ func (p *ImplS3Storage) UploadObject(filename string, data []byte) (*s3.PutObjec
 		Bucket: aws.String(p.bucketName),
 		Key:    aws.String(filename),
 		ACL:    aws.String(s3.BucketCannedACLPublicRead),
+	})
+}
+
+func (p *ImplS3Storage) UploadImage(fileName string, fileType string, data []byte) (*s3.PutObjectOutput, error) {
+	return p.session.PutObject(&s3.PutObjectInput{
+		Body:          aws.ReadSeekCloser(bytes.NewReader(data)),
+		Bucket:        aws.String(p.bucketName),
+		Key:           aws.String(fileName),
+		ACL:           aws.String(s3.BucketCannedACLPublicRead),
+		ContentType:   aws.String(fileType),
+		ContentLength: aws.Int64(int64(len(data))),
 	})
 }
 
