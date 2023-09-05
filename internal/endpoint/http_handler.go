@@ -1,7 +1,6 @@
 package endpoint
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
@@ -112,6 +111,10 @@ func (h *HttpHandler) getAllProducts(ctx *fasthttp.RequestCtx) {
 	}
 
 	products, err := h.productsTable.GetAllProducts(offset, limit)
+	if products == nil {
+		products = []repo.Product{}
+	}
+
 	writeObject(ctx, products, fasthttp.StatusOK)
 }
 
@@ -164,6 +167,7 @@ func (h *HttpHandler) getAllImages(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *HttpHandler) insertImage(ctx *fasthttp.RequestCtx) {
+	// TODO: Компрессия изображений
 	nameBytes := ctx.QueryArgs().Peek("name")
 	if len(nameBytes) == 0 {
 		writeError(ctx, "empty name", fasthttp.StatusBadRequest)
@@ -171,21 +175,9 @@ func (h *HttpHandler) insertImage(ctx *fasthttp.RequestCtx) {
 	}
 
 	name := cast.ByteArrayToString(nameBytes)
+	body := ctx.PostBody()
+	err := h.storage.InsertImage(name, body)
 
-	var image string
-	err := json.Unmarshal(ctx.PostBody(), &image)
-	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
-		return
-	}
-
-	decodedImage, err := base64.StdEncoding.DecodeString(image)
-	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
-		return
-	}
-
-	err = h.storage.InsertImage(name, decodedImage)
 	if err != nil {
 		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
 		return

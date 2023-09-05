@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -15,13 +16,13 @@ const (
 )
 
 type Product struct {
-	Id              uint
-	Name            string
-	Images          []string
-	Stock           StockType
-	Discount        uint8
-	Description     string
-	Characteristics [][2]string
+	Id              uint        `json:"id"`
+	Name            string      `json:"name"`
+	Images          []string    `json:"images"`
+	Stock           StockType   `json:"stock"`
+	Discount        uint8       `json:"discount"`
+	Description     string      `json:"description"`
+	Characteristics [][2]string `json:"characteristics"`
 }
 
 type ProductsTable struct {
@@ -76,11 +77,15 @@ func (t *ProductsTable) GetAllProducts(offset int, limit int) ([]Product, error)
 
 	var res []Product
 	for rows.Next() {
-		var (
-			p Product
-		)
+		var p Product
 
-		err = rows.Scan(&p.Id, &p.Name, &p.Images, &p.Stock, &p.Discount, &p.Description, &p.Characteristics)
+		var charBytes []byte
+		err = rows.Scan(&p.Id, &p.Name, &p.Images, &p.Stock, &p.Discount, &p.Description, &charBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(charBytes, &p.Characteristics)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +98,12 @@ func (t *ProductsTable) GetAllProducts(offset int, limit int) ([]Product, error)
 }
 
 func (t *ProductsTable) Insert(p Product) error {
-	_, err := t.db.Exec(context.Background(), t.insertStmt.Name, p.Name, p.Images, p.Stock, p.Discount, p.Description, p.Characteristics)
+	charBytes, err := json.Marshal(p.Characteristics)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.db.Exec(context.Background(), t.insertStmt.Name, p.Name, p.Images, p.Stock, p.Discount, p.Description, charBytes)
 	return err
 }
 

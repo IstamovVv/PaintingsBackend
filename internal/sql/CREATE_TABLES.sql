@@ -6,5 +6,5 @@ CREATE TABLE products
     stock SMALLINT,
     discount SMALLINT,
     description VARCHAR,
-    characteristics VARCHAR[2][]
+    characteristics bytea
 )
