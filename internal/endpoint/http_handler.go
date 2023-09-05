@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
 	"paint-backend/internal/repo"
-	"paint-backend/internal/s3storage"
+	"paint-backend/internal/s3"
 	"paint-backend/internal/util/cast"
 )
 
@@ -73,11 +73,11 @@ var routingMap = map[string]route{
 }
 
 type HttpHandler struct {
-	storage       *s3storage.Storage
+	storage       *s3.Storage
 	productsTable *repo.ProductsTable
 }
 
-func NewHttpHandler(storage *s3storage.Storage, table *repo.ProductsTable) *HttpHandler {
+func NewHttpHandler(storage *s3.Storage, table *repo.ProductsTable) *HttpHandler {
 	return &HttpHandler{
 		storage:       storage,
 		productsTable: table,

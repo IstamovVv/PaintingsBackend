@@ -1,9 +1,10 @@
-package s3storage
+package s3
 
 import (
 	"github.com/spf13/viper"
 	"os"
 	"paint-backend/pkg/fserver"
+	"paint-backend/pkg/s3storage"
 )
 
 type Storage struct {
@@ -12,7 +13,7 @@ type Storage struct {
 
 func NewStorage() *Storage {
 	return &Storage{
-		fs: fserver.NewCommonFileServer(NewS3Storage(Config{
+		fs: fserver.NewCommonFileServer(s3storage.NewS3Storage(s3storage.Config{
 			BucketName: viper.GetString("s3.bucket"),
 			Region:     viper.GetString("s3.region"),
 			Host:       viper.GetString("s3.host"),

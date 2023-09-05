@@ -2,7 +2,7 @@ package fserver
 
 import (
 	"io"
-	"paint-backend/internal/s3storage"
+	"paint-backend/pkg/s3storage"
 )
 
 type CommonFileServer struct {

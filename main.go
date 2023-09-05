@@ -11,14 +11,14 @@ import (
 	"paint-backend/internal/endpoint"
 	"paint-backend/internal/logger"
 	"paint-backend/internal/repo"
-	"paint-backend/internal/s3storage"
+	"paint-backend/internal/s3"
 )
 
 var (
 	dbConn      *pgx.Conn
 	httpHandler *endpoint.HttpHandler
 
-	storage       *s3storage.Storage
+	storage       *s3.Storage
 	productsTable *repo.ProductsTable
 )
 
@@ -79,5 +79,5 @@ func setupTables() {
 }
 
 func setupStorage() {
-	storage = s3storage.NewStorage()
+	storage = s3.NewStorage()
 }
