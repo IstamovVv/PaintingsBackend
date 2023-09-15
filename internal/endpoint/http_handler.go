@@ -11,6 +11,11 @@ import (
 	"paint-backend/internal/s3"
 	"paint-backend/internal/util/cast"
 	"strings"
+	"sync"
+)
+
+var (
+	mutex sync.Mutex
 )
 
 func init() {
@@ -94,7 +99,18 @@ func (h *HttpHandler) Handle(ctx *fasthttp.RequestCtx) {
 		}
 	}()
 
+	// TODO replace mutex by conn pool
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if r, ok := routingMap[cast.ByteArrayToString(ctx.Path())]; ok {
+		addCorsHeaders(ctx)
+
+		if cast.ByteArrayToString(ctx.Method()) == fasthttp.MethodOptions {
+			ctx.SetStatusCode(fasthttp.StatusOK)
+			return
+		}
+
 		r.handler(ctx, h)
 	} else {
 		ctx.SetStatusCode(fasthttp.StatusNotFound)
@@ -250,4 +266,10 @@ func writeError(ctx *fasthttp.RequestCtx, message string, status int) {
 	ctx.SetStatusCode(status)
 	ctx.Response.Header.Set(fasthttp.HeaderContentType, "application/json")
 	_, _ = ctx.Write(row)
+}
+
+func addCorsHeaders(ctx *fasthttp.RequestCtx) {
+	ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+	ctx.Response.Header.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH")
+	ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
 }

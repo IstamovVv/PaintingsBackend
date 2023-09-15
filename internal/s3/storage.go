@@ -30,7 +30,16 @@ func NewStorage() *Storage {
 }
 
 func (s *Storage) GetAllImages() ([]string, error) {
-	return s.fs.GetFilesList()
+	list, err := s.fs.GetFilesList()
+	if err != nil {
+		return nil, err
+	}
+
+	for i, name := range list {
+		list[i] = s.imagesUrl + name
+	}
+
+	return list, nil
 }
 
 func (s *Storage) InsertImage(name string, mime string, image []byte) (string, error) {

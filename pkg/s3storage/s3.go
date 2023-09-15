@@ -76,10 +76,11 @@ func (p *ImplS3Storage) connect() {
 
 func (p *ImplS3Storage) UploadObject(filename string, data []byte) (*s3.PutObjectOutput, error) {
 	return p.session.PutObject(&s3.PutObjectInput{
-		Body:   aws.ReadSeekCloser(bytes.NewReader(data)),
-		Bucket: aws.String(p.bucketName),
-		Key:    aws.String(filename),
-		ACL:    aws.String(s3.BucketCannedACLPublicRead),
+		Body:        aws.ReadSeekCloser(bytes.NewReader(data)),
+		Bucket:      aws.String(p.bucketName),
+		Key:         aws.String(filename),
+		ACL:         aws.String(s3.BucketCannedACLPublicRead),
+		ContentType: aws.String("jpeg"),
 	})
 }
 
