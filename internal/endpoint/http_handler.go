@@ -212,13 +212,13 @@ func (h *HttpHandler) insertImage(ctx *fasthttp.RequestCtx) {
 	newFileName := nameSplit[0] + ".jpg"
 	mimeType := http.DetectContentType(out)
 
-	link, err := h.storage.InsertImage(newFileName, mimeType, out)
+	err = h.storage.InsertImage(newFileName, mimeType, out)
 	if err != nil {
 		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
 		return
 	}
 
-	writeObject(ctx, link, fasthttp.StatusOK)
+	writeObject(ctx, newFileName, fasthttp.StatusOK)
 }
 
 func (h *HttpHandler) deleteImage(ctx *fasthttp.RequestCtx) {

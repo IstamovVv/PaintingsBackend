@@ -19,6 +19,7 @@ type Product struct {
 	Id              uint        `json:"id"`
 	Name            string      `json:"name"`
 	Images          []string    `json:"images"`
+	Price           float32     `json:"price"`
 	Stock           StockType   `json:"stock"`
 	Discount        uint8       `json:"discount"`
 	Description     string      `json:"description"`
@@ -34,7 +35,7 @@ type ProductsTable struct {
 
 const (
 	getAllQuery = `SELECT * FROM products OFFSET $1 LIMIT $2`
-	insertQuery = `INSERT INTO products (name, images, stock, discount, description, characteristics) values ($1, $2, $3, $4, $5, $6)`
+	insertQuery = `INSERT INTO products (name, stock, price, discount, images, description, characteristics) values ($1, $2, $3, $4, $5, $6, $7)`
 	deleteQuery = `DELETE FROM products WHERE id = $1`
 )
 
@@ -80,7 +81,7 @@ func (t *ProductsTable) GetAllProducts(offset int, limit int) ([]Product, error)
 		var p Product
 
 		var charBytes []byte
-		err = rows.Scan(&p.Id, &p.Name, &p.Images, &p.Stock, &p.Discount, &p.Description, &charBytes)
+		err = rows.Scan(&p.Id, &p.Name, &p.Stock, &p.Price, &p.Discount, &p.Images, &p.Description, &charBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +104,7 @@ func (t *ProductsTable) Insert(p Product) error {
 		return err
 	}
 
-	_, err = t.db.Exec(context.Background(), t.insertStmt.Name, p.Name, p.Images, p.Stock, p.Discount, p.Description, charBytes)
+	_, err = t.db.Exec(context.Background(), t.insertStmt.Name, p.Name, p.Stock, p.Price, p.Discount, p.Images, p.Description, charBytes)
 	return err
 }
 
