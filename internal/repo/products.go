@@ -30,12 +30,14 @@ type ProductsTable struct {
 	db         *pgx.Conn
 	getAllStmt *pgconn.StatementDescription
 	insertStmt *pgconn.StatementDescription
+	updateStmt *pgconn.StatementDescription
 	deleteStmt *pgconn.StatementDescription
 }
 
 const (
 	getAllQuery = `SELECT * FROM products OFFSET $1 LIMIT $2`
 	insertQuery = `INSERT INTO products (name, stock, price, discount, images, description, characteristics) values ($1, $2, $3, $4, $5, $6, $7)`
+	updateQuery = `UPDATE products SET name = $2, stock = $3, price = $4, discount = $5, images = $6, description = $7, characteristics = $8 WHERE id = $1`
 	deleteQuery = `DELETE FROM products WHERE id = $1`
 )
 
@@ -44,6 +46,7 @@ func NewProductsTable(db *pgx.Conn) (*ProductsTable, error) {
 		err        error
 		getAllStmt *pgconn.StatementDescription
 		insertStmt *pgconn.StatementDescription
+		updateStmt *pgconn.StatementDescription
 		deleteStmt *pgconn.StatementDescription
 	)
 
@@ -57,6 +60,11 @@ func NewProductsTable(db *pgx.Conn) (*ProductsTable, error) {
 		return nil, err
 	}
 
+	updateStmt, err = db.Prepare(context.Background(), "updateProductQuery", updateQuery)
+	if err != nil {
+		return nil, err
+	}
+
 	deleteStmt, err = db.Prepare(context.Background(), "deleteProductQuery", deleteQuery)
 	if err != nil {
 		return nil, err
@@ -66,6 +74,7 @@ func NewProductsTable(db *pgx.Conn) (*ProductsTable, error) {
 		db:         db,
 		getAllStmt: getAllStmt,
 		insertStmt: insertStmt,
+		updateStmt: updateStmt,
 		deleteStmt: deleteStmt,
 	}, nil
 }
@@ -98,9 +107,14 @@ func (t *ProductsTable) GetAllProducts(offset int, limit int) ([]Product, error)
 	return res, rows.Err()
 }
 
-func (t *ProductsTable) Insert(p Product) error {
+func (t *ProductsTable) Insert(p Product, editFlag bool) error {
 	charBytes, err := json.Marshal(p.Characteristics)
 	if err != nil {
+		return err
+	}
+
+	if editFlag {
+		_, err = t.db.Exec(context.Background(), t.updateStmt.Name, p.Id, p.Name, p.Stock, p.Price, p.Discount, p.Images, p.Description, charBytes)
 		return err
 	}
 

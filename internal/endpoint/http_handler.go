@@ -10,6 +10,7 @@ import (
 	"paint-backend/internal/repo"
 	"paint-backend/internal/s3"
 	"paint-backend/internal/util/cast"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -38,7 +39,7 @@ var routingMap = map[string]route{
 				{
 					h.getAllProducts(ctx)
 				}
-			case fasthttp.MethodPost:
+			case fasthttp.MethodPut:
 				{
 					h.insertProduct(ctx)
 				}
@@ -139,8 +140,20 @@ func (h *HttpHandler) getAllProducts(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *HttpHandler) insertProduct(ctx *fasthttp.RequestCtx) {
+	editFlagBytes := ctx.QueryArgs().Peek("edit")
+	if len(editFlagBytes) == 0 {
+		writeError(ctx, "empty edit flag", fasthttp.StatusBadRequest)
+		return
+	}
+
+	editFlag, err := strconv.ParseBool(cast.ByteArrayToString(editFlagBytes))
+	if err != nil {
+		writeError(ctx, "failed to parse edit flag: "+err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
 	var product repo.Product
-	err := json.Unmarshal(ctx.PostBody(), &product)
+	err = json.Unmarshal(ctx.PostBody(), &product)
 	if err != nil {
 		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
 		return
@@ -151,7 +164,7 @@ func (h *HttpHandler) insertProduct(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	err = h.productsTable.Insert(product)
+	err = h.productsTable.Insert(product, editFlag)
 	if err != nil {
 		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
 		return
