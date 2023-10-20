@@ -1,11 +1,16 @@
 module paint-backend
 
-go 1.20
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	github.com/aws/aws-sdk-go v1.44.330
+	github.com/jackc/pgx/v5 v5.4.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.16.0
+	github.com/sunshineplan/imgconv v1.1.5
+	github.com/valyala/fasthttp v1.49.0
 )
 
 require (
@@ -17,7 +22,6 @@ require (
 	github.com/hhrutter/tiff v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v5 v5.4.3 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -32,10 +36,8 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
-	github.com/sunshineplan/imgconv v1.1.5 // indirect
 	github.com/sunshineplan/pdf v1.0.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.49.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/image v0.11.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect

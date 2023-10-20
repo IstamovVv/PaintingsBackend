@@ -18,8 +18,11 @@ var (
 	dbConn      *pgx.Conn
 	httpHandler *endpoint.HttpHandler
 
-	storage       *s3.Storage
-	productsTable *repo.ProductsTable
+	storage           *s3.Storage
+	productsTable     *repo.ProductsTable
+	subjectsTable     *repo.SubjectsTable
+	brandsTable       *repo.BrandsTable
+	subjectBrandTable *repo.SubjectBrandTable
 )
 
 func main() {
@@ -29,7 +32,7 @@ func main() {
 	setupTables()
 	setupStorage()
 
-	httpHandler = endpoint.NewHttpHandler(storage, productsTable)
+	httpHandler = endpoint.NewHttpHandler(storage, productsTable, subjectsTable, brandsTable, subjectBrandTable)
 	go func() {
 		logrus.Info("Server was started")
 		err := fasthttp.ListenAndServe("0.0.0.0:8000", httpHandler.Handle)
@@ -75,6 +78,21 @@ func setupTables() {
 	productsTable, err = repo.NewProductsTable(dbConn)
 	if err != nil {
 		logrus.Fatal("Failed to init products table: ", err.Error())
+	}
+
+	subjectsTable, err = repo.NewSubjectsTable(dbConn)
+	if err != nil {
+		logrus.Fatal("Failed to init subjects table: ", err.Error())
+	}
+
+	brandsTable, err = repo.NewBrandsTable(dbConn)
+	if err != nil {
+		logrus.Fatal("Failed to init brands table: ", err.Error())
+	}
+
+	subjectBrandTable, err = repo.NewSubjectBrandTable(dbConn)
+	if err != nil {
+		logrus.Fatal("Failed to init subject brand table: ", err.Error())
 	}
 }
 
