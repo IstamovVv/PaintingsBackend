@@ -50,7 +50,7 @@ func main() {
 
 func setupConfiguration() {
 	viper.SetConfigName("configuration")
-	viper.SetConfigType("yml")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
