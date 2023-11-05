@@ -1,18 +1,20 @@
 package endpoint
 
 import (
-	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/sunshineplan/imgconv"
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"paint-backend/internal/repo"
 	"paint-backend/internal/s3"
 	"paint-backend/internal/util/cast"
 	"strconv"
-	"strings"
 	"sync"
+)
+
+const (
+	maxImageSizeInBytes = 1024 * 1024 * 10
 )
 
 var (
@@ -285,29 +287,24 @@ func (h *HttpHandler) insertImage(ctx *fasthttp.RequestCtx) {
 	name := cast.ByteArrayToString(nameBytes)
 	body := ctx.PostBody()
 
-	img, err := imgconv.Decode(bytes.NewReader(body))
-	img = imgconv.Resize(img, &imgconv.ResizeOption{Height: 300, Width: 300})
+	if len(body) > maxImageSizeInBytes {
+		writeError(ctx, "Too big image", fasthttp.StatusBadRequest)
+		return
+	}
 
-	var buf bytes.Buffer
-	err = imgconv.Write(&buf, img, &imgconv.FormatOption{Format: imgconv.JPEG})
+	mimeType := http.DetectContentType(body)
+	if mimeType != "image/png" && mimeType != "image/jpeg" {
+		writeError(ctx, fmt.Sprintf("Invalid image type: %s. Allowed only jpeg and png", mimeType), fasthttp.StatusBadRequest)
+		return
+	}
+
+	err := h.storage.InsertImage(name, mimeType, body)
 	if err != nil {
 		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
 		return
 	}
 
-	out := buf.Bytes()
-	nameSplit := strings.Split(name, ".")
-
-	newFileName := nameSplit[0] + ".jpg"
-	mimeType := http.DetectContentType(out)
-
-	err = h.storage.InsertImage(newFileName, mimeType, out)
-	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
-		return
-	}
-
-	writeObject(ctx, newFileName, fasthttp.StatusOK)
+	writeObject(ctx, name, fasthttp.StatusOK)
 }
 
 func (h *HttpHandler) deleteImage(ctx *fasthttp.RequestCtx) {
