@@ -26,8 +26,8 @@ type Product struct {
 	Discount        uint8       `json:"discount"`
 	Description     string      `json:"description"`
 	Characteristics [][2]string `json:"characteristics"`
-	SubjectId       uint        `json:"subject_id"`
-	BrandId         uint        `json:"brand_id"`
+	SubjectId       uint        `json:"subject"`
+	BrandId         uint        `json:"brand"`
 }
 
 type ProductsTable struct {
