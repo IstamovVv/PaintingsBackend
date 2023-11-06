@@ -10,6 +10,7 @@ import (
 	"paint-backend/internal/s3"
 	"paint-backend/internal/util/cast"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -58,6 +59,17 @@ var routingMap = map[string]route{
 				h.insertImage(ctx)
 			case fasthttp.MethodDelete:
 				h.deleteImage(ctx)
+			default:
+				ctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)
+			}
+		},
+	},
+
+	"/api/v1/images/folders": {
+		handler: func(ctx *fasthttp.RequestCtx, h *HttpHandler) {
+			switch cast.ByteArrayToString(ctx.Method()) {
+			case fasthttp.MethodGet:
+				h.getImagesFolders(ctx)
 			default:
 				ctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)
 			}
@@ -268,13 +280,24 @@ func (h *HttpHandler) deleteProduct(ctx *fasthttp.RequestCtx) {
 }
 
 func (h *HttpHandler) getAllImages(ctx *fasthttp.RequestCtx) {
-	images, err := h.storage.GetAllImages()
+	path := cast.ByteArrayToString(ctx.QueryArgs().Peek("path"))
+	images, err := h.storage.GetImages(strings.Join(strings.Split(path, ","), "/"))
 	if err != nil {
 		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
 		return
 	}
 
 	writeObject(ctx, images, fasthttp.StatusOK)
+}
+
+func (h *HttpHandler) getImagesFolders(ctx *fasthttp.RequestCtx) {
+	folders, err := h.storage.GetImagesFolders()
+	if err != nil {
+		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	writeObject(ctx, folders, fasthttp.StatusOK)
 }
 
 func (h *HttpHandler) insertImage(ctx *fasthttp.RequestCtx) {
