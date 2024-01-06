@@ -30,5 +30,13 @@ CREATE TABLE products
     characteristics bytea,
 
     subject_id INTEGER REFERENCES subjects (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    brand_id INTEGER REFERENCES brands (id) ON DELETE CASCADE ON UPDATE CASCADE
+    brand_id INTEGER REFERENCES brands (id) ON DELETE CASCADE ON UPDATE CASCADE,
+
+    currency INTEGER REFERENCES currency (id)
+);
+
+CREATE TABLE currency
+(
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL
 )
