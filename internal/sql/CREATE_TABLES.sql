@@ -2,7 +2,9 @@ CREATE TABLE subjects
 (
     id   SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL,
-    image VARCHAR
+    image VARCHAR,
+
+    parent_id INTEGER REFERENCES subjects (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE brands

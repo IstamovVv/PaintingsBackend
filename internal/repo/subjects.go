@@ -6,9 +6,10 @@ import (
 )
 
 type Subject struct {
-	Id    uint   `json:"id"`
-	Name  string `json:"name"`
-	Image string `json:"image"`
+	Id       uint   `json:"id"`
+	Name     string `json:"name"`
+	Image    string `json:"image"`
+	ParentId uint   `json:"parent_id"`
 }
 
 type SubjectsTable struct {
@@ -17,8 +18,8 @@ type SubjectsTable struct {
 
 const (
 	getAllSubjectsQuery = `SELECT * FROM subjects`
-	insertSubjectQuery  = `INSERT INTO subjects (name, image) values ($1, $2)`
-	updateSubjectQuery  = `UPDATE subjects SET name = $2, image = $3 WHERE id = $1`
+	insertSubjectQuery  = `INSERT INTO subjects (name, image, parent_id) values ($1, $2, $3)`
+	updateSubjectQuery  = `UPDATE subjects SET name = $2, image = $3, parent_id = $4 WHERE id = $1`
 	deleteSubjectQuery  = `DELETE FROM subjects WHERE id = $1`
 )
 
@@ -36,9 +37,14 @@ func (t *SubjectsTable) GetAll() ([]Subject, error) {
 	for rows.Next() {
 		var b Subject
 
-		err = rows.Scan(&b.Id, &b.Name, &b.Image)
+		var parentId *uint
+		err = rows.Scan(&b.Id, &b.Name, &b.Image, &parentId)
 		if err != nil {
 			return nil, err
+		}
+
+		if parentId != nil {
+			b.ParentId = *parentId
 		}
 
 		res = append(res, b)
@@ -50,12 +56,12 @@ func (t *SubjectsTable) GetAll() ([]Subject, error) {
 }
 
 func (t *SubjectsTable) Insert(s Subject) error {
-	_, err := t.db.Exec(context.Background(), insertSubjectQuery, s.Name, s.Image)
+	_, err := t.db.Exec(context.Background(), insertSubjectQuery, s.Name, s.Image, s.ParentId)
 	return err
 }
 
 func (t *SubjectsTable) Update(s Subject) error {
-	_, err := t.db.Exec(context.Background(), updateSubjectQuery, s.Id, s.Name, s.Image)
+	_, err := t.db.Exec(context.Background(), updateSubjectQuery, s.Id, s.Name, s.Image, s.ParentId)
 	return err
 }
 
