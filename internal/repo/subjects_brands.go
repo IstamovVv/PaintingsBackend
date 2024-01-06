@@ -2,8 +2,7 @@ package repo
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type SubjectBrand struct {
@@ -13,11 +12,7 @@ type SubjectBrand struct {
 }
 
 type SubjectBrandTable struct {
-	db               *pgx.Conn
-	getAllStmt       *pgconn.StatementDescription
-	getBySubjectStmt *pgconn.StatementDescription
-	getByBrandStmt   *pgconn.StatementDescription
-	insertStmt       *pgconn.StatementDescription
+	db *pgxpool.Pool
 }
 
 const (
@@ -27,46 +22,12 @@ const (
 	insertSubjectBrandQuery   = `INSERT INTO subjects_brands (subject_id, brand_id) values ($1, $2)`
 )
 
-func NewSubjectBrandTable(db *pgx.Conn) (*SubjectBrandTable, error) {
-	var (
-		err              error
-		getAllStmt       *pgconn.StatementDescription
-		getBySubjectStmt *pgconn.StatementDescription
-		getByBrandStmt   *pgconn.StatementDescription
-		insertStmt       *pgconn.StatementDescription
-	)
-
-	getAllStmt, err = db.Prepare(context.Background(), "getAllSubjectsBrandsQuery", getAllSubjectsBrandsQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	getBySubjectStmt, err = db.Prepare(context.Background(), "getBySubjectQuery", getBySubjectQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	getByBrandStmt, err = db.Prepare(context.Background(), "getByBrandQuery", getByBrandQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	insertStmt, err = db.Prepare(context.Background(), "insertSubjectBrandQuery", insertSubjectBrandQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	return &SubjectBrandTable{
-		db:               db,
-		getAllStmt:       getAllStmt,
-		getBySubjectStmt: getBySubjectStmt,
-		getByBrandStmt:   getByBrandStmt,
-		insertStmt:       insertStmt,
-	}, nil
+func NewSubjectBrandTable(db *pgxpool.Pool) *SubjectBrandTable {
+	return &SubjectBrandTable{db}
 }
 
 func (t *SubjectBrandTable) GetBrandIdsBySubjectId(subjectId uint) ([]uint, error) {
-	rows, err := t.db.Query(context.Background(), t.getBySubjectStmt.Name, subjectId)
+	rows, err := t.db.Query(context.Background(), getBySubjectQuery, subjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +50,7 @@ func (t *SubjectBrandTable) GetBrandIdsBySubjectId(subjectId uint) ([]uint, erro
 }
 
 func (t *SubjectBrandTable) GetSubjectIdsByBrandId(brandId uint) ([]uint, error) {
-	rows, err := t.db.Query(context.Background(), t.getBySubjectStmt.Name, brandId)
+	rows, err := t.db.Query(context.Background(), getByBrandQuery, brandId)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +73,6 @@ func (t *SubjectBrandTable) GetSubjectIdsByBrandId(brandId uint) ([]uint, error)
 }
 
 func (t *SubjectBrandTable) Insert(s SubjectBrand) error {
-	_, err := t.db.Exec(context.Background(), t.insertStmt.Name, s.SubjectId, s.BrandId)
+	_, err := t.db.Exec(context.Background(), insertSubjectBrandQuery, s.SubjectId, s.BrandId)
 	return err
 }

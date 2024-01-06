@@ -4,8 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"strings"
 )
 
@@ -31,10 +30,7 @@ type Product struct {
 }
 
 type ProductsTable struct {
-	db         *pgx.Conn
-	insertStmt *pgconn.StatementDescription
-	updateStmt *pgconn.StatementDescription
-	deleteStmt *pgconn.StatementDescription
+	db *pgxpool.Pool
 }
 
 const (
@@ -43,35 +39,8 @@ const (
 	deleteProductQuery = `DELETE FROM products WHERE id = $1`
 )
 
-func NewProductsTable(db *pgx.Conn) (*ProductsTable, error) {
-	var (
-		err        error
-		insertStmt *pgconn.StatementDescription
-		updateStmt *pgconn.StatementDescription
-		deleteStmt *pgconn.StatementDescription
-	)
-
-	insertStmt, err = db.Prepare(context.Background(), "insertProductQuery", insertProductQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	updateStmt, err = db.Prepare(context.Background(), "updateProductQuery", updateProductQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	deleteStmt, err = db.Prepare(context.Background(), "deleteProductQuery", deleteProductQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ProductsTable{
-		db:         db,
-		insertStmt: insertStmt,
-		updateStmt: updateStmt,
-		deleteStmt: deleteStmt,
-	}, nil
+func NewProductsTable(db *pgxpool.Pool) *ProductsTable {
+	return &ProductsTable{db}
 }
 
 type SearchProductsOptions struct {
@@ -138,15 +107,15 @@ func (t *ProductsTable) Insert(p Product, editFlag bool) error {
 	}
 
 	if editFlag {
-		_, err = t.db.Exec(context.Background(), t.updateStmt.Name, p.Id, p.Name, p.Stock, p.Price, p.Discount, p.Images, p.Description, charBytes, p.SubjectId, p.BrandId)
+		_, err = t.db.Exec(context.Background(), updateProductQuery, p.Id, p.Name, p.Stock, p.Price, p.Discount, p.Images, p.Description, charBytes, p.SubjectId, p.BrandId)
 		return err
 	}
 
-	_, err = t.db.Exec(context.Background(), t.insertStmt.Name, p.Name, p.Stock, p.Price, p.Discount, p.Images, p.Description, charBytes, p.SubjectId, p.BrandId)
+	_, err = t.db.Exec(context.Background(), insertProductQuery, p.Name, p.Stock, p.Price, p.Discount, p.Images, p.Description, charBytes, p.SubjectId, p.BrandId)
 	return err
 }
 
 func (t *ProductsTable) Delete(id uint) error {
-	_, err := t.db.Exec(context.Background(), t.deleteStmt.Name, id)
+	_, err := t.db.Exec(context.Background(), deleteProductQuery, id)
 	return err
 }

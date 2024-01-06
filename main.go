@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	dbConn      *pgx.Conn
+	dbPool      *pgxpool.Pool
 	httpHandler *endpoint.HttpHandler
 
 	storage           *s3.Storage
@@ -45,7 +45,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 	<-sigChan
 
-	dbConn.Close(context.Background())
+	dbPool.Close()
 }
 
 func setupConfiguration() {
@@ -62,38 +62,22 @@ func setupDatabase() {
 	dbUrl := viper.GetString("sql.url")
 
 	var err error
-	dbConn, err = pgx.Connect(context.Background(), dbUrl)
+	dbPool, err = pgxpool.New(context.Background(), dbUrl)
 	if err != nil {
 		logrus.Fatal("Failed to connect to db: ", err.Error())
 	}
 
-	err = dbConn.Ping(context.Background())
+	err = dbPool.Ping(context.Background())
 	if err != nil {
 		logrus.Fatal("Failed to ping db: ", err.Error())
 	}
 }
 
 func setupTables() {
-	var err error
-	productsTable, err = repo.NewProductsTable(dbConn)
-	if err != nil {
-		logrus.Fatal("Failed to init products table: ", err.Error())
-	}
-
-	subjectsTable, err = repo.NewSubjectsTable(dbConn)
-	if err != nil {
-		logrus.Fatal("Failed to init subjects table: ", err.Error())
-	}
-
-	brandsTable, err = repo.NewBrandsTable(dbConn)
-	if err != nil {
-		logrus.Fatal("Failed to init brands table: ", err.Error())
-	}
-
-	subjectBrandTable, err = repo.NewSubjectBrandTable(dbConn)
-	if err != nil {
-		logrus.Fatal("Failed to init subject brand table: ", err.Error())
-	}
+	productsTable = repo.NewProductsTable(dbPool)
+	subjectsTable = repo.NewSubjectsTable(dbPool)
+	brandsTable = repo.NewBrandsTable(dbPool)
+	subjectBrandTable = repo.NewSubjectBrandTable(dbPool)
 }
 
 func setupStorage() {

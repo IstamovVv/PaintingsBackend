@@ -2,8 +2,7 @@ package repo
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Subject struct {
@@ -13,11 +12,7 @@ type Subject struct {
 }
 
 type SubjectsTable struct {
-	db         *pgx.Conn
-	getAllStmt *pgconn.StatementDescription
-	insertStmt *pgconn.StatementDescription
-	updateStmt *pgconn.StatementDescription
-	deleteStmt *pgconn.StatementDescription
+	db *pgxpool.Pool
 }
 
 const (
@@ -27,46 +22,12 @@ const (
 	deleteSubjectQuery  = `DELETE FROM subjects WHERE id = $1`
 )
 
-func NewSubjectsTable(db *pgx.Conn) (*SubjectsTable, error) {
-	var (
-		err        error
-		getAllStmt *pgconn.StatementDescription
-		insertStmt *pgconn.StatementDescription
-		updateStmt *pgconn.StatementDescription
-		deleteStmt *pgconn.StatementDescription
-	)
-
-	getAllStmt, err = db.Prepare(context.Background(), "getAllSubjectsQuery", getAllSubjectsQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	insertStmt, err = db.Prepare(context.Background(), "insertSubjectQuery", insertSubjectQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	updateStmt, err = db.Prepare(context.Background(), "updateSubjectQuery", updateSubjectQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	deleteStmt, err = db.Prepare(context.Background(), "deleteSubjectQuery", deleteSubjectQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	return &SubjectsTable{
-		db:         db,
-		getAllStmt: getAllStmt,
-		insertStmt: insertStmt,
-		updateStmt: updateStmt,
-		deleteStmt: deleteStmt,
-	}, nil
+func NewSubjectsTable(db *pgxpool.Pool) *SubjectsTable {
+	return &SubjectsTable{db}
 }
 
 func (t *SubjectsTable) GetAll() ([]Subject, error) {
-	rows, err := t.db.Query(context.Background(), t.getAllStmt.Name)
+	rows, err := t.db.Query(context.Background(), getAllSubjectsQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -89,16 +50,16 @@ func (t *SubjectsTable) GetAll() ([]Subject, error) {
 }
 
 func (t *SubjectsTable) Insert(s Subject) error {
-	_, err := t.db.Exec(context.Background(), t.insertStmt.Name, s.Name, s.Image)
+	_, err := t.db.Exec(context.Background(), insertSubjectQuery, s.Name, s.Image)
 	return err
 }
 
 func (t *SubjectsTable) Update(s Subject) error {
-	_, err := t.db.Exec(context.Background(), t.updateStmt.Name, s.Id, s.Name, s.Image)
+	_, err := t.db.Exec(context.Background(), updateSubjectQuery, s.Id, s.Name, s.Image)
 	return err
 }
 
 func (t *SubjectsTable) Delete(id uint) error {
-	_, err := t.db.Exec(context.Background(), t.deleteStmt.Name, id)
+	_, err := t.db.Exec(context.Background(), deleteSubjectQuery, id)
 	return err
 }

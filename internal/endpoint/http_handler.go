@@ -11,15 +11,10 @@ import (
 	"paint-backend/internal/util/cast"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 const (
 	maxImageSizeInBytes = 1024 * 1024 * 10
-)
-
-var (
-	mutex sync.Mutex
 )
 
 func init() {
@@ -142,10 +137,6 @@ func (h *HttpHandler) Handle(ctx *fasthttp.RequestCtx) {
 			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
 		}
 	}()
-
-	// TODO replace mutex by conn pool
-	mutex.Lock()
-	defer mutex.Unlock()
 
 	if r, ok := routingMap[cast.ByteArrayToString(ctx.Path())]; ok {
 		addCorsHeaders(ctx)
