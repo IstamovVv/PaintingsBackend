@@ -124,6 +124,21 @@ var routingMap = map[string]route{
 			}
 		},
 	},
+
+	"/api/v2/subjects": {
+		handler: func(ctx *fasthttp.RequestCtx, h *HttpHandler) {
+			switch cast.ByteArrayToString(ctx.Method()) {
+			case fasthttp.MethodGet:
+				h.getAllSubjectsV2(ctx)
+			case fasthttp.MethodPost:
+				h.insertSubject(ctx)
+			case fasthttp.MethodDelete:
+				h.deleteSubject(ctx)
+			default:
+				ctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)
+			}
+		},
+	},
 }
 
 type HttpHandler struct {
@@ -491,6 +506,20 @@ func (h *HttpHandler) getAllSubjects(ctx *fasthttp.RequestCtx) {
 
 	if subjects == nil {
 		subjects = []repo.Subject{}
+	}
+
+	writeObject(ctx, subjects, fasthttp.StatusOK)
+}
+
+func (h *HttpHandler) getAllSubjectsV2(ctx *fasthttp.RequestCtx) {
+	subjects, err := h.subjectsTable.GetAllV2()
+	if err != nil {
+		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	if subjects == nil {
+		subjects = []repo.SubjectV2{}
 	}
 
 	writeObject(ctx, subjects, fasthttp.StatusOK)
