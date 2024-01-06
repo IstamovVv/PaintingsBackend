@@ -9,7 +9,7 @@ type Subject struct {
 	Id       uint   `json:"id"`
 	Name     string `json:"name"`
 	Image    string `json:"image"`
-	ParentId uint   `json:"parent_id"`
+	ParentId uint   `json:"parentId"`
 }
 
 type SubjectsTable struct {
