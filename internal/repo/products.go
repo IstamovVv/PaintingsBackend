@@ -21,6 +21,7 @@ type Product struct {
 	Name            string      `json:"name"`
 	Images          []string    `json:"images"`
 	Price           float32     `json:"price"`
+	Currency        uint        `json:"currency"`
 	Stock           StockType   `json:"stock"`
 	Discount        uint8       `json:"discount"`
 	Description     string      `json:"description"`
@@ -34,8 +35,8 @@ type ProductsTable struct {
 }
 
 const (
-	insertProductQuery = `INSERT INTO products (name, stock, price, discount, images, description, characteristics, subject_id, brand_id) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-	updateProductQuery = `UPDATE products SET name = $2, stock = $3, price = $4, discount = $5, images = $6, description = $7, characteristics = $8, subject_id = $9, brand_id = $10 WHERE id = $1`
+	insertProductQuery = `INSERT INTO products (name, stock, price, currency, discount, images, description, characteristics, subject_id, brand_id) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+	updateProductQuery = `UPDATE products SET name = $2, stock = $3, price = $4, currency = $5, discount = $6, images = $7, description = $8, characteristics = $9, subject_id = $10, brand_id = $11 WHERE id = $1`
 	deleteProductQuery = `DELETE FROM products WHERE id = $1`
 )
 
@@ -63,7 +64,7 @@ func (t *ProductsTable) GetAllProducts(offset int, limit int, options SearchProd
 		var p Product
 
 		var charBytes []byte
-		err = rows.Scan(&p.Id, &p.Name, &p.Stock, &p.Price, &p.Discount, &p.Images, &p.Description, &charBytes, &p.SubjectId, &p.BrandId)
+		err = rows.Scan(&p.Id, &p.Name, &p.Stock, &p.Price, &p.Currency, &p.Discount, &p.Images, &p.Description, &charBytes, &p.SubjectId, &p.BrandId)
 		if err != nil {
 			return nil, err
 		}
@@ -107,11 +108,11 @@ func (t *ProductsTable) Insert(p Product, editFlag bool) error {
 	}
 
 	if editFlag {
-		_, err = t.db.Exec(context.Background(), updateProductQuery, p.Id, p.Name, p.Stock, p.Price, p.Discount, p.Images, p.Description, charBytes, p.SubjectId, p.BrandId)
+		_, err = t.db.Exec(context.Background(), updateProductQuery, p.Id, p.Name, p.Stock, p.Price, p.Currency, p.Discount, p.Images, p.Description, charBytes, p.SubjectId, p.BrandId)
 		return err
 	}
 
-	_, err = t.db.Exec(context.Background(), insertProductQuery, p.Name, p.Stock, p.Price, p.Discount, p.Images, p.Description, charBytes, p.SubjectId, p.BrandId)
+	_, err = t.db.Exec(context.Background(), insertProductQuery, p.Name, p.Stock, p.Price, p.Currency, p.Discount, p.Images, p.Description, charBytes, p.SubjectId, p.BrandId)
 	return err
 }
 

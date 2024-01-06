@@ -20,6 +20,7 @@ var (
 
 	storage           *s3.Storage
 	productsTable     *repo.ProductsTable
+	currencyTable     *repo.CurrencyTable
 	subjectsTable     *repo.SubjectsTable
 	brandsTable       *repo.BrandsTable
 	subjectBrandTable *repo.SubjectBrandTable
@@ -32,7 +33,7 @@ func main() {
 	setupTables()
 	setupStorage()
 
-	httpHandler = endpoint.NewHttpHandler(storage, productsTable, subjectsTable, brandsTable, subjectBrandTable)
+	httpHandler = endpoint.NewHttpHandler(storage, productsTable, currencyTable, subjectsTable, brandsTable, subjectBrandTable)
 	go func() {
 		logrus.Info("Server was started")
 		err := fasthttp.ListenAndServe("0.0.0.0:8000", httpHandler.Handle)
@@ -75,6 +76,7 @@ func setupDatabase() {
 
 func setupTables() {
 	productsTable = repo.NewProductsTable(dbPool)
+	currencyTable = repo.NewCurrencyTable(dbPool)
 	subjectsTable = repo.NewSubjectsTable(dbPool)
 	brandsTable = repo.NewBrandsTable(dbPool)
 	subjectBrandTable = repo.NewSubjectBrandTable(dbPool)

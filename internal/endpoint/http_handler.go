@@ -45,6 +45,21 @@ var routingMap = map[string]route{
 		},
 	},
 
+	"/api/v1/currency": {
+		handler: func(ctx *fasthttp.RequestCtx, h *HttpHandler) {
+			switch cast.ByteArrayToString(ctx.Method()) {
+			case fasthttp.MethodGet:
+				h.getAllCurrency(ctx)
+			case fasthttp.MethodPut:
+				h.insertCurrency(ctx)
+			case fasthttp.MethodDelete:
+				h.deleteCurrency(ctx)
+			default:
+				ctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)
+			}
+		},
+	},
+
 	"/api/v1/images": {
 		handler: func(ctx *fasthttp.RequestCtx, h *HttpHandler) {
 			switch cast.ByteArrayToString(ctx.Method()) {
@@ -114,15 +129,17 @@ var routingMap = map[string]route{
 type HttpHandler struct {
 	storage           *s3.Storage
 	productsTable     *repo.ProductsTable
+	currencyTable     *repo.CurrencyTable
 	subjectsTable     *repo.SubjectsTable
 	brandsTable       *repo.BrandsTable
 	subjectBrandTable *repo.SubjectBrandTable
 }
 
-func NewHttpHandler(storage *s3.Storage, productsTable *repo.ProductsTable, subjectsTable *repo.SubjectsTable, brandsTable *repo.BrandsTable, subjectBrandTable *repo.SubjectBrandTable) *HttpHandler {
+func NewHttpHandler(storage *s3.Storage, productsTable *repo.ProductsTable, currencyTable *repo.CurrencyTable, subjectsTable *repo.SubjectsTable, brandsTable *repo.BrandsTable, subjectBrandTable *repo.SubjectBrandTable) *HttpHandler {
 	return &HttpHandler{
 		storage:           storage,
 		productsTable:     productsTable,
+		currencyTable:     currencyTable,
 		subjectsTable:     subjectsTable,
 		brandsTable:       brandsTable,
 		subjectBrandTable: subjectBrandTable,
@@ -262,6 +279,65 @@ func (h *HttpHandler) deleteProduct(ctx *fasthttp.RequestCtx) {
 	}
 
 	err = h.productsTable.Delete(uint(id))
+	if err != nil {
+		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
+}
+
+func (h *HttpHandler) getAllCurrency(ctx *fasthttp.RequestCtx) {
+	currencies, err := h.currencyTable.GetAllCurrency()
+	if err != nil {
+		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	if currencies == nil {
+		currencies = []repo.Currency{}
+	}
+
+	writeObject(ctx, currencies, fasthttp.StatusOK)
+}
+
+func (h *HttpHandler) insertCurrency(ctx *fasthttp.RequestCtx) {
+	editFlagBytes := ctx.QueryArgs().Peek("edit")
+	if len(editFlagBytes) == 0 {
+		writeError(ctx, "empty edit flag", fasthttp.StatusBadRequest)
+		return
+	}
+
+	editFlag, err := strconv.ParseBool(cast.ByteArrayToString(editFlagBytes))
+	if err != nil {
+		writeError(ctx, "failed to parse edit flag: "+err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	var currency repo.Currency
+	err = json.Unmarshal(ctx.PostBody(), &currency)
+	if err != nil {
+		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	err = h.currencyTable.Insert(currency, editFlag)
+	if err != nil {
+		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
+}
+
+func (h *HttpHandler) deleteCurrency(ctx *fasthttp.RequestCtx) {
+	id, err := ctx.QueryArgs().GetUint("id")
+	if err != nil {
+		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
+		return
+	}
+
+	err = h.currencyTable.Delete(uint(id))
 	if err != nil {
 		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
 		return
