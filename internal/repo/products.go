@@ -65,7 +65,7 @@ func (t *ProductsTable) GetAllProducts(offset int, limit int, options SearchProd
 
 		var charBytes []byte
 		var currencyId *uint
-		err = rows.Scan(&p.Id, &p.Name, &p.Stock, &p.Price, &currencyId, &p.Discount, &p.Images, &p.Description, &charBytes, &p.SubjectId, &p.BrandId)
+		err = rows.Scan(&p.Id, &p.Name, &p.Stock, &p.Price, &p.Discount, &p.Images, &p.Description, &charBytes, &p.SubjectId, &p.BrandId, &currencyId)
 		if err != nil {
 			return nil, err
 		}
