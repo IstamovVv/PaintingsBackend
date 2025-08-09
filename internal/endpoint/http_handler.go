@@ -213,7 +213,8 @@ func (h *HttpHandler) getAllProducts(ctx *fasthttp.RequestCtx) {
 
 	products, err := h.productsTable.GetAllProducts(offset, limit, searchOptions)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to get all products: ", err.Error())
+		writeError(ctx, "failed to get all products", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -240,7 +241,7 @@ func (h *HttpHandler) insertProduct(ctx *fasthttp.RequestCtx) {
 	var product repo.Product
 	err = json.Unmarshal(ctx.PostBody(), &product)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
+		writeError(ctx, "failed to parse product", fasthttp.StatusBadRequest)
 		return
 	}
 
@@ -260,7 +261,8 @@ func (h *HttpHandler) insertProduct(ctx *fasthttp.RequestCtx) {
 
 	relatedBrands, err = h.subjectBrandTable.GetBrandIdsBySubjectId(product.SubjectId)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Errorf("failed to get brand ids by subject id %d: %s", product.SubjectId, err.Error())
+		writeError(ctx, "failed to get brand ids by passed subject id", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -278,7 +280,8 @@ func (h *HttpHandler) insertProduct(ctx *fasthttp.RequestCtx) {
 		})
 
 		if err != nil {
-			writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+			logrus.Error("failed to insert subject brand: ", err.Error())
+			writeError(ctx, "failed to insert subject brand", fasthttp.StatusInternalServerError)
 			return
 		}
 	}
@@ -295,7 +298,8 @@ func (h *HttpHandler) deleteProduct(ctx *fasthttp.RequestCtx) {
 
 	err = h.productsTable.Delete(uint(id))
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to delete product: ", err.Error())
+		writeError(ctx, "failed to delete product", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -305,7 +309,8 @@ func (h *HttpHandler) deleteProduct(ctx *fasthttp.RequestCtx) {
 func (h *HttpHandler) getAllCurrency(ctx *fasthttp.RequestCtx) {
 	currencies, err := h.currencyTable.GetAllCurrency()
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to get all currencies: ", err.Error())
+		writeError(ctx, "failed to get currencies", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -332,13 +337,14 @@ func (h *HttpHandler) insertCurrency(ctx *fasthttp.RequestCtx) {
 	var currency repo.Currency
 	err = json.Unmarshal(ctx.PostBody(), &currency)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
+		writeError(ctx, "failed to parse currency", fasthttp.StatusBadRequest)
 		return
 	}
 
 	err = h.currencyTable.Insert(currency, editFlag)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to insert currency: ", err.Error())
+		writeError(ctx, "failed to insert currency", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -354,7 +360,8 @@ func (h *HttpHandler) deleteCurrency(ctx *fasthttp.RequestCtx) {
 
 	err = h.currencyTable.Delete(uint(id))
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to delete currency: ", err.Error())
+		writeError(ctx, "failed to delete currency", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -365,7 +372,8 @@ func (h *HttpHandler) getAllImages(ctx *fasthttp.RequestCtx) {
 	path := cast.ByteArrayToString(ctx.QueryArgs().Peek("path"))
 	images, err := h.storage.GetImages(strings.Join(strings.Split(path, ","), "/"))
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to get all images: ", err.Error())
+		writeError(ctx, "failed to get images", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -375,7 +383,8 @@ func (h *HttpHandler) getAllImages(ctx *fasthttp.RequestCtx) {
 func (h *HttpHandler) getImagesFolders(ctx *fasthttp.RequestCtx) {
 	folders, err := h.storage.GetImagesFolders()
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to get all images folders: ", err.Error())
+		writeError(ctx, "failed to get all images folders", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -405,7 +414,8 @@ func (h *HttpHandler) insertImage(ctx *fasthttp.RequestCtx) {
 
 	err := h.storage.InsertImage(name, mimeType, body)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to insert image: ", err.Error())
+		writeError(ctx, "failed to insert image", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -423,7 +433,8 @@ func (h *HttpHandler) deleteImage(ctx *fasthttp.RequestCtx) {
 
 	err := h.storage.DeleteImage(name)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to delete image: ", err.Error())
+		writeError(ctx, "failed to delete image", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -453,7 +464,8 @@ func (h *HttpHandler) getBrandsBySubject(ctx *fasthttp.RequestCtx) {
 
 	brands, err := h.subjectBrandTable.GetBrandIdsBySubjectId(uint(id))
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to get brands by subject id: ", err.Error())
+		writeError(ctx, "failed to get brand ids by subject id", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -468,13 +480,14 @@ func (h *HttpHandler) insertBrand(ctx *fasthttp.RequestCtx) {
 	var brand repo.Brand
 	err := json.Unmarshal(ctx.PostBody(), &brand)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
+		writeError(ctx, "failed to parse brand", fasthttp.StatusBadRequest)
 		return
 	}
 
 	err = h.brandsTable.Insert(brand)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to insert brand: ", err.Error())
+		writeError(ctx, "failed to insert brand", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -484,13 +497,14 @@ func (h *HttpHandler) insertBrand(ctx *fasthttp.RequestCtx) {
 func (h *HttpHandler) deleteBrand(ctx *fasthttp.RequestCtx) {
 	id, err := ctx.QueryArgs().GetUint("id")
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
+		writeError(ctx, "failed to parse id", fasthttp.StatusBadRequest)
 		return
 	}
 
 	err = h.brandsTable.Delete(uint(id))
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to delete brand: ", err.Error())
+		writeError(ctx, "failed to delete brand", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -500,7 +514,8 @@ func (h *HttpHandler) deleteBrand(ctx *fasthttp.RequestCtx) {
 func (h *HttpHandler) getAllSubjects(ctx *fasthttp.RequestCtx) {
 	subjects, err := h.subjectsTable.GetAll()
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to get all subjects: ", err.Error())
+		writeError(ctx, "failed to get all subjects", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -514,7 +529,8 @@ func (h *HttpHandler) getAllSubjects(ctx *fasthttp.RequestCtx) {
 func (h *HttpHandler) getAllSubjectsV2(ctx *fasthttp.RequestCtx) {
 	subjects, err := h.subjectsTable.GetAllV2()
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to get all subjects v2: ", err.Error())
+		writeError(ctx, "failed to get all subjects", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -529,13 +545,14 @@ func (h *HttpHandler) insertSubject(ctx *fasthttp.RequestCtx) {
 	var subject repo.Subject
 	err := json.Unmarshal(ctx.PostBody(), &subject)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
+		writeError(ctx, "failed to parse subject", fasthttp.StatusBadRequest)
 		return
 	}
 
 	err = h.subjectsTable.Insert(subject)
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to insert subject: ", err.Error())
+		writeError(ctx, "failed to insert subject", fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -545,13 +562,14 @@ func (h *HttpHandler) insertSubject(ctx *fasthttp.RequestCtx) {
 func (h *HttpHandler) deleteSubject(ctx *fasthttp.RequestCtx) {
 	id, err := ctx.QueryArgs().GetUint("id")
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusBadRequest)
+		writeError(ctx, "failed to parse id", fasthttp.StatusBadRequest)
 		return
 	}
 
 	err = h.subjectsTable.Delete(uint(id))
 	if err != nil {
-		writeError(ctx, err.Error(), fasthttp.StatusInternalServerError)
+		logrus.Error("failed to delete subject: ", err.Error())
+		writeError(ctx, "failed to delete subject", fasthttp.StatusInternalServerError)
 		return
 	}
 
