@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: local_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: boom
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12956
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d  # опционально, для скриптов инициализации
+    networks:
+      - postgres_network
+
+volumes:
+  postgres_data:
+
+networks:
+  postgres_network:
+    driver: bridge
