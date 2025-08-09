@@ -1,4 +1,4 @@
-CREATE TABLE subjects
+CREATE TABLE IF NOT EXISTS subjects
 (
     id   SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL,
@@ -7,20 +7,26 @@ CREATE TABLE subjects
     parent_id INTEGER REFERENCES subjects (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE brands
+CREATE TABLE IF NOT EXISTS brands
 (
     id SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL
 );
 
-CREATE TABLE subjects_brands
+CREATE TABLE IF NOT EXISTS currency
+(
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL
+)
+
+CREATE TABLE IF NOT EXISTS subjects_brands
 (
     id SERIAL PRIMARY KEY,
     subject_id INTEGER REFERENCES subjects (id) ON DELETE CASCADE ON UPDATE CASCADE,
     brand_id INTEGER REFERENCES brands (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE products
+CREATE TABLE IF NOT EXISTS products
 (
     id SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL,
@@ -36,9 +42,3 @@ CREATE TABLE products
 
     currency INTEGER REFERENCES currency (id)
 );
-
-CREATE TABLE currency
-(
-    id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL
-)
